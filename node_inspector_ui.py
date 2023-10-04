@@ -1,6 +1,6 @@
 import hou
 from functools import partial
-import typing
+
 from PySide2.QtWidgets import (
     QPushButton,
     QWidget,
@@ -14,7 +14,7 @@ from PySide2.QtWidgets import (
     QLineEdit,
     QLabel,
 )
-from PySide2.QtCore import Qt, Slot
+from PySide2.QtCore import Qt, Slot, QRegExp
 from PySide2.QtGui import (
     QTextOption,
     QDragEnterEvent,
@@ -23,30 +23,86 @@ from PySide2.QtGui import (
 )
 from enum import Enum
 
-
-# Define your functions here
-def get_user_data():
-    print("Getting user data...")
+# from .generate_wrapper import generate_properties
 
 
-def get_labels():
-    print("Getting labels...")
+def generate_properties(node):
+    """
+    Generate Python property and setter methods for a given hou.Node's parameters.
+
+    Args:
+        node (hou.Node): The Houdini node for which to generate the properties.
+
+    Returns:
+        str: The string containing the Python property and setter methods.
+    """
+    # Initialize an empty string to store the resulting code
+    output_code = ""
+
+    # Loop through all parameter templates
+    for parm_template in node.parmTemplateGroup().entries():
+        # Skip folders and separators
+        if isinstance(parm_template, hou.FolderParmTemplate) or isinstance(
+            parm_template, hou.SeparatorParmTemplate
+        ):
+            continue
+
+        # Extract the name of the parameter
+        parm_name = parm_template.name()
+
+        # Generate the @property code
+        property_code = f"""
+    @property
+    def {parm_name}(self):
+        return self.node.parm("{parm_name}").eval()
+"""
+
+        # Generate the @setter code
+        setter_code = f"""
+    @{parm_name}.setter
+    def {parm_name}(self, value):
+        self.node.parm("{parm_name}").set(value)
+"""
+        # Concatenate the generated code
+        output_code += property_code + setter_code
+
+    return output_code
 
 
-def get_all_defaults():
-    print("Getting all defaults...")
+def text_edit_handler(node, text_edit, text=""):
+    text_edit.clear()
+    text_edit.append(text)
 
 
-def get_all_expressions():
-    print("Getting all expressions...")
+def get_user_data(node, text_edit):
+    print(f"Getting user data... {node}")
+    text_edit_handler(node, text_edit)
 
 
-def generate_wrapper():
-    print("Generating wrapper...")
+def get_labels(node, text_edit):
+    print(f"Getting labels... {node}")
+    text_edit_handler(node, text_edit)
 
 
-def explode_to_subnetwork():
+def get_all_defaults(node, text_edit):
+    print(f"Getting all defaults... {node}")
+    text_edit_handler(node, text_edit)
+
+
+def get_all_expressions(node, text_edit):
+    print(f"Getting all expressions... {node}")
+    text_edit_handler(node, text_edit)
+
+
+def generate_wrapper(node, text_edit):
+    text = generate_properties(node)
+    print(f"{text}")
+    text_edit_handler(node, text_edit, text)
+
+
+def explode_to_subnetwork(node, text_edit):
     print("Exploding to subnetwork...")
+    text_edit_handler(node, text_edit)
 
 
 # Create a mapping between button names and functions
@@ -170,6 +226,53 @@ class NeatLayoutTypes(Enum):
     FORM = QFormLayout
 
 
+from PySide2.QtGui import QSyntaxHighlighter, QTextCharFormat, QColor, QFont
+
+
+class PythonHighlighter(QSyntaxHighlighter):
+    def __init__(self, parent=None):
+        super(PythonHighlighter, self).__init__(parent)
+
+        keyword_format = QTextCharFormat()
+        keyword_format.setForeground(QColor("#3579dc"))
+        keyword_format.setFontWeight(QFont.Bold)
+        self.keywords = [
+            "def",
+            "return",
+            "True",
+            "False",
+            "self",
+            "import",
+            "from",
+            "as",
+        ]
+
+        comment_format = QTextCharFormat()
+        comment_format.setForeground(QColor("#6a9955"))
+
+        string_format = QTextCharFormat()
+        string_format.setForeground(QColor("#ce9178"))
+
+        self.highlighting_rules = [
+            (QRegExp(r"\b%s\b" % keyword), keyword_format) for keyword in self.keywords
+        ]
+
+        self.highlighting_rules.append((QRegExp(r"#.*"), comment_format))
+        self.highlighting_rules.append((QRegExp(r"'.*'"), string_format))
+        self.highlighting_rules.append((QRegExp(r'".*"'), string_format))
+
+    def highlightBlock(self, text):
+        for pattern, _format in self.highlighting_rules:
+            expression = QRegExp(pattern)
+            index = expression.indexIn(text)
+            while index >= 0:
+                length = expression.matchedLength()
+                self.setFormat(index, length, _format)
+                index = expression.indexIn(text, index + length)
+
+        self.setCurrentBlockState(0)
+
+
 class NeatWidgetConstructor(QWidget):
     def __init__(
         self,
@@ -285,6 +388,7 @@ class NodePathField(QWidget):
     def __init__(self, parent=None):
         super(NodePathField, self).__init__(parent)
         self.setAcceptDrops(True)
+        self.node = None
 
         self.main_layout = QHBoxLayout(self)
         self.main_layout.setSpacing(0)
@@ -309,7 +413,7 @@ class NodePathField(QWidget):
     def dropEvent(self, event: QDropEvent):
         if event.mimeData().hasText():
             self.label.setText(event.mimeData().text())
-            node_validator(event.mimeData().text())
+            self.node = node_validator(event.mimeData().text())
 
             event.acceptProposedAction()
 
@@ -329,8 +433,8 @@ class MainWIndow(QMainWindow):
             self, layout_type=NeatLayoutTypes.VERTICAL, add_stretch=True
         )
 
-        node_path_field = NodePathField()
-        buttons_widget.add_widget(node_path_field)
+        self.node_path_field = NodePathField()
+        buttons_widget.add_widget(self.node_path_field)
 
         populate_buttons(
             sample_list=[i for i in BUTTON_MAPPING.keys()],
@@ -357,12 +461,11 @@ class MainWIndow(QMainWindow):
         self.edit_text_widget.setLineWrapMode(QTextEdit.FixedPixelWidth)
         self.edit_text_widget.setLineWrapColumnOrWidth(600)
         self.edit_text_widget.setWordWrapMode(QTextOption.NoWrap)
-        self.edit_text_widget.setStyleSheet(
-            "background-color: rgb(40,40,40); color: rgb(200,200,200);"
-        )
+        self.edit_text_widget.setStyleSheet("background-color: rgb(5,5,5);")
+        self.syntax_highlighter = PythonHighlighter(self.edit_text_widget.document())
         return self.edit_text_widget
 
     def button_callback(self, button_name):
         self.edit_text_widget.clear()
-        self.edit_text_widget.append(button_name)
-        BUTTON_MAPPING[button_name]()
+
+        BUTTON_MAPPING[button_name](self.node_path_field.node, self.edit_text_widget)
