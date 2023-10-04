@@ -11,9 +11,16 @@ from PySide2.QtWidgets import (
     QGridLayout,
     QHBoxLayout,
     QFormLayout,
+    QLineEdit,
+    QLabel,
 )
 from PySide2.QtCore import Qt, Slot
-from PySide2.QtGui import QTextOption
+from PySide2.QtGui import (
+    QTextOption,
+    QDragEnterEvent,
+    QDropEvent,
+    QDragMoveEvent,
+)
 from enum import Enum
 
 BUTTON_NAMES = [
@@ -24,6 +31,9 @@ BUTTON_NAMES = [
     "Generate Wrapper",
     "Explode To Subnetwork",
 ]
+
+MARGIN = 5
+PADDING = 15
 
 
 def populate_buttons(
@@ -36,6 +46,8 @@ def populate_buttons(
     fixed_width=False,
     uncheck=True,
     initial_checked=1,
+    margin=5,
+    padding=15,
 ):
     """Populate a layout with checkable buttons from list.
     Connects each button to a callback function.
@@ -110,6 +122,18 @@ def populate_buttons(
             button.pressed.connect(
                 lambda button=button: set_unchecked(button, buttons_list)
             )
+
+
+def node_validator(path):
+    if path:
+        node = hou.node(path)
+        if node:
+            print("Valid Node Path Found", node)
+            return node
+
+        else:
+            print("Non Valid Node Path")
+            return None
 
 
 class NeatLayoutTypes(Enum):
@@ -230,6 +254,39 @@ class NeatWidgetConstructorCollapsible(QWidget):
         super().showEvent(event)
 
 
+class NodePathField(QWidget):
+    def __init__(self, parent=None):
+        super(NodePathField, self).__init__(parent)
+        self.setAcceptDrops(True)
+
+        self.main_layout = QHBoxLayout(self)
+        self.main_layout.setSpacing(0)
+        self.main_layout.setContentsMargins(0, 0, 0, 0)
+
+        self.label = QLabel("Drop Node Here")
+        self.label.setAlignment(Qt.AlignCenter)
+        self.label.setStyleSheet(
+            f"background-color: rgb(40,40,40); color: rgb(200,200,200); border-radius: 10px; margin: {MARGIN}px; padding: {PADDING}px;"
+        )
+        self.main_layout.addWidget(self.label)
+        self.setLayout(self.main_layout)
+
+    def dragEnterEvent(self, event: QDragEnterEvent):
+        if event.mimeData().hasText():
+            event.acceptProposedAction()
+
+    def dragMoveEvent(self, event: QDragMoveEvent):
+        if event.mimeData().hasText():
+            event.acceptProposedAction()
+
+    def dropEvent(self, event: QDropEvent):
+        if event.mimeData().hasText():
+            self.label.setText(event.mimeData().text())
+            node_validator(event.mimeData().text())
+
+            event.acceptProposedAction()
+
+
 class MainWIndow(QMainWindow):
     def __init__(self, parent=hou.ui.mainQtWindow()):
         QMainWindow.__init__(self, parent, Qt.WindowStaysOnTopHint)
@@ -239,10 +296,14 @@ class MainWIndow(QMainWindow):
             self, layout_type=NeatLayoutTypes.VERTICAL
         )
         self.setCentralWidget(self.central_widget)
+
         splitter = QSplitter(Qt.Horizontal)
         buttons_widget = NeatWidgetConstructor(
             self, layout_type=NeatLayoutTypes.VERTICAL, add_stretch=True
         )
+
+        node_path_field = NodePathField()
+        buttons_widget.add_widget(node_path_field)
 
         populate_buttons(
             sample_list=BUTTON_NAMES,
