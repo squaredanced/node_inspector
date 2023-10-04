@@ -23,14 +23,41 @@ from PySide2.QtGui import (
 )
 from enum import Enum
 
-BUTTON_NAMES = [
-    "Get User Data",
-    "Get Labels",
-    "Get All Defaults",
-    "Get All Expressions",
-    "Generate Wrapper",
-    "Explode To Subnetwork",
-]
+
+# Define your functions here
+def get_user_data():
+    print("Getting user data...")
+
+
+def get_labels():
+    print("Getting labels...")
+
+
+def get_all_defaults():
+    print("Getting all defaults...")
+
+
+def get_all_expressions():
+    print("Getting all expressions...")
+
+
+def generate_wrapper():
+    print("Generating wrapper...")
+
+
+def explode_to_subnetwork():
+    print("Exploding to subnetwork...")
+
+
+# Create a mapping between button names and functions
+BUTTON_MAPPING = {
+    "Get User Data": get_user_data,
+    "Get Labels": get_labels,
+    "Get All Defaults": get_all_defaults,
+    "Get All Expressions": get_all_expressions,
+    "Generate Wrapper": generate_wrapper,
+    "Explode To Subnetwork": explode_to_subnetwork,
+}
 
 MARGIN = 5
 PADDING = 15
@@ -306,7 +333,7 @@ class MainWIndow(QMainWindow):
         buttons_widget.add_widget(node_path_field)
 
         populate_buttons(
-            sample_list=BUTTON_NAMES,
+            sample_list=[i for i in BUTTON_MAPPING.keys()],
             buttons_list=[],
             layout=buttons_widget.main_layout,
             callback=self.button_callback,
@@ -338,3 +365,4 @@ class MainWIndow(QMainWindow):
     def button_callback(self, button_name):
         self.edit_text_widget.clear()
         self.edit_text_widget.append(button_name)
+        BUTTON_MAPPING[button_name]()
