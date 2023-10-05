@@ -2,6 +2,8 @@ import hou
 from functools import partial
 from .generate_wrapper import generate_properties
 from .python_highlighter import PythonHighlighter
+from .utils import pretty_print_dict
+from .utils import node_validator
 from .widgets_construct import NeatWidgetConstructor, NeatLayoutTypes
 from PySide2.QtWidgets import (
     QPushButton,
@@ -19,7 +21,7 @@ from PySide2.QtGui import (
     QDropEvent,
     QDragMoveEvent,
 )
-
+import json
 
 # from .generate_wrapper import generate_properties
 
@@ -30,8 +32,12 @@ def text_edit_handler(node, text_edit, text=""):
 
 
 def get_user_data(node, text_edit):
-    print(f"Getting user data... {node}")
-    text_edit_handler(node, text_edit)
+    node_data = node.userDataDict()
+    text = pretty_print_dict(node_data)
+    text_edit_handler(node, text_edit, text)
+
+    text = pretty_print_dict(node_data)
+    text_edit_handler(node, text_edit, text)
 
 
 def get_labels(node, text_edit):
@@ -160,18 +166,6 @@ def populate_buttons(
             button.pressed.connect(
                 lambda button=button: set_unchecked(button, buttons_list)
             )
-
-
-def node_validator(path):
-    if path:
-        node = hou.node(path)
-        if node:
-            print("Valid Node Path Found", node)
-            return node
-
-        else:
-            print("Non Valid Node Path")
-            return None
 
 
 class NodePathField(QWidget):
