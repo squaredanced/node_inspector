@@ -1,6 +1,7 @@
 import hou
 from functools import partial
-
+from .generate_wrapper import generate_properties
+from .python_highlighter import PythonHighlighter
 from PySide2.QtWidgets import (
     QPushButton,
     QWidget,
@@ -23,50 +24,8 @@ from PySide2.QtGui import (
 )
 from enum import Enum
 
+
 # from .generate_wrapper import generate_properties
-
-
-def generate_properties(node):
-    """
-    Generate Python property and setter methods for a given hou.Node's parameters.
-
-    Args:
-        node (hou.Node): The Houdini node for which to generate the properties.
-
-    Returns:
-        str: The string containing the Python property and setter methods.
-    """
-    # Initialize an empty string to store the resulting code
-    output_code = ""
-
-    # Loop through all parameter templates
-    for parm_template in node.parmTemplateGroup().entries():
-        # Skip folders and separators
-        if isinstance(parm_template, hou.FolderParmTemplate) or isinstance(
-            parm_template, hou.SeparatorParmTemplate
-        ):
-            continue
-
-        # Extract the name of the parameter
-        parm_name = parm_template.name()
-
-        # Generate the @property code
-        property_code = f"""
-    @property
-    def {parm_name}(self):
-        return self.node.parm("{parm_name}").eval()
-"""
-
-        # Generate the @setter code
-        setter_code = f"""
-    @{parm_name}.setter
-    def {parm_name}(self, value):
-        self.node.parm("{parm_name}").set(value)
-"""
-        # Concatenate the generated code
-        output_code += property_code + setter_code
-
-    return output_code
 
 
 def text_edit_handler(node, text_edit, text=""):
@@ -184,10 +143,10 @@ def populate_buttons(
     for n, i in enumerate(sample_list):
         button = QPushButton(" ".join(str(i).split("_")).title())
         button.setStyleSheet(
-            "QPushButton {background-color: rgb(50,50,50); color: rgb(200,200,200); border-radius: 10px; padding: 20px; margin: 5px;}"
-            "QPushButton:hover {background-color: rgb(60,60,60);}"
+            "QPushButton {background-color: rgb(10,10,10); color: rgb(200,200,200); border-radius: 10px; padding: 20px; margin: 5px;}"
+            "QPushButton:hover {background-color: rgb(65,85,130);}"
             "QPushButton:checked {background-color: rgb(70,70,70);}"
-            "QPushButton:pressed {background-color: rgb(80,80,80);}"
+            "QPushButton:pressed {background-color: rgb(80,95,180);}"
         )
         if checkable:
             button.setCheckable(True)
@@ -227,50 +186,6 @@ class NeatLayoutTypes(Enum):
 
 
 from PySide2.QtGui import QSyntaxHighlighter, QTextCharFormat, QColor, QFont
-
-
-class PythonHighlighter(QSyntaxHighlighter):
-    def __init__(self, parent=None):
-        super(PythonHighlighter, self).__init__(parent)
-
-        keyword_format = QTextCharFormat()
-        keyword_format.setForeground(QColor("#3579dc"))
-        keyword_format.setFontWeight(QFont.Bold)
-        self.keywords = [
-            "def",
-            "return",
-            "True",
-            "False",
-            "self",
-            "import",
-            "from",
-            "as",
-        ]
-
-        comment_format = QTextCharFormat()
-        comment_format.setForeground(QColor("#6a9955"))
-
-        string_format = QTextCharFormat()
-        string_format.setForeground(QColor("#ce9178"))
-
-        self.highlighting_rules = [
-            (QRegExp(r"\b%s\b" % keyword), keyword_format) for keyword in self.keywords
-        ]
-
-        self.highlighting_rules.append((QRegExp(r"#.*"), comment_format))
-        self.highlighting_rules.append((QRegExp(r"'.*'"), string_format))
-        self.highlighting_rules.append((QRegExp(r'".*"'), string_format))
-
-    def highlightBlock(self, text):
-        for pattern, _format in self.highlighting_rules:
-            expression = QRegExp(pattern)
-            index = expression.indexIn(text)
-            while index >= 0:
-                length = expression.matchedLength()
-                self.setFormat(index, length, _format)
-                index = expression.indexIn(text, index + length)
-
-        self.setCurrentBlockState(0)
 
 
 class NeatWidgetConstructor(QWidget):
@@ -422,7 +337,7 @@ class MainWIndow(QMainWindow):
     def __init__(self, parent=hou.ui.mainQtWindow()):
         QMainWindow.__init__(self, parent, Qt.WindowStaysOnTopHint)
         self.setWindowTitle("Node Inspector Tools")
-        self.resize(400, 200)
+        self.resize(800, 200)
         self.central_widget = NeatWidgetConstructor(
             self, layout_type=NeatLayoutTypes.VERTICAL
         )
@@ -445,10 +360,14 @@ class MainWIndow(QMainWindow):
 
         splitter.addWidget(buttons_widget)
 
-        # Add QTextEdit Widget with synatax set to python
+        # Add QTextEdit Widget with syntax set to python
 
         self.create_edit_text()
         splitter.addWidget(self.edit_text_widget)
+
+        splitter.setStretchFactor(0, 0)  # buttons_widget, static
+        splitter.setStretchFactor(1, 1)  # self.edit_text_widget, stretches
+
         self.central_widget.main_layout.addWidget(splitter)
 
     def create_edit_text(self):
@@ -457,7 +376,7 @@ class MainWIndow(QMainWindow):
         self.edit_text_widget.setLineWrapMode(QTextEdit.NoWrap)
         self.edit_text_widget.setTabStopWidth(20)
         self.edit_text_widget.setFontFamily("Courier")
-        self.edit_text_widget.setFontPointSize(10)
+        self.edit_text_widget.setFontPointSize(15)
         self.edit_text_widget.setLineWrapMode(QTextEdit.FixedPixelWidth)
         self.edit_text_widget.setLineWrapColumnOrWidth(600)
         self.edit_text_widget.setWordWrapMode(QTextOption.NoWrap)
