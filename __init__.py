@@ -5,10 +5,12 @@ from . import printer
 from . import generate_wrapper
 from . import python_highlighter
 from . import widgets_construct
+from . import explode_hda_to_subnet
 
 
 # Reload modules
 reload(utils)
+reload(explode_hda_to_subnet)
 reload(node_inspector_ui)
 reload(printer)
 reload(generate_wrapper)
