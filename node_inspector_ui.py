@@ -4,6 +4,7 @@ from .generate_wrapper import generate_properties
 from .python_highlighter import PythonHighlighter
 from .utils import pretty_print_dict
 from .utils import node_validator
+from .explode_hda_to_subnet import explode_me
 from .widgets_construct import NeatWidgetConstructor, NeatLayoutTypes
 from PySide2.QtWidgets import (
     QPushButton,
@@ -57,13 +58,14 @@ def get_all_expressions(node, text_edit):
 
 def generate_wrapper(node, text_edit):
     text = generate_properties(node)
-    print(f"{text}")
     text_edit_handler(node, text_edit, text)
 
 
 def explode_to_subnetwork(node, text_edit):
-    print("Exploding to subnetwork...")
-    text_edit_handler(node, text_edit)
+    text = explode_me(node)
+    text_edit_handler(
+        node, text_edit, text=f"Exploded node:\n\t{node.path()}\nto Subnetwork"
+    )
 
 
 # Create a mapping between button names and functions
