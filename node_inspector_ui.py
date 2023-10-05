@@ -1,6 +1,7 @@
 import hou
 from functools import partial
 from .generate_wrapper import generate_properties
+from .get_all_labels import traverse_parms_from_node
 from .python_highlighter import PythonHighlighter
 from .utils import pretty_print_dict
 from .utils import node_validator
@@ -42,8 +43,9 @@ def get_user_data(node, text_edit):
 
 
 def get_labels(node, text_edit):
-    print(f"Getting labels... {node}")
-    text_edit_handler(node, text_edit)
+    text = traverse_parms_from_node(node)
+
+    text_edit_handler(node, text_edit, text)
 
 
 def get_all_defaults(node, text_edit):
