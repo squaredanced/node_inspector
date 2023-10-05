@@ -1,8 +1,11 @@
 # Houdini Node Inspector
 
 This is toolset for gathering information from the node in covnenient form.
-I have been using a lot of it's uctionality in my Houdini TD work but every time i had to rewrite the same functionality.
-Do I decided to make a swiss-knofe-style toolset for quickly getting info from the node like:
+I have been using a lot of it's uctionality in my Houdini TD work but every time I had to rewrite the same functionality.
+This is a colletion of small things that never around when they needed.
+____
+
+So I decided to make a swiss-knofe-style toolset for quickly getting info from the node like:
   - Get all parameter names
   - Get all parameter labels
   - Get user data
@@ -10,7 +13,7 @@ Do I decided to make a swiss-knofe-style toolset for quickly getting info from t
   - Get callbacks
   - Get conditionals
   - Explode HDA to subnetwork
-  - etc
+  - etc.
 ___
 
 ## Current State 
