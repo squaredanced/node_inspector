@@ -4,7 +4,7 @@ from PySide2.QtGui import QColor, QFont, QSyntaxHighlighter, QTextCharFormat
 
 class PythonHighlighter(QSyntaxHighlighter):
     def __init__(self, parent=None):
-        super(PythonHighlighter, self).__init__(parent)
+        super().__init__(parent)
 
         keyword_format = QTextCharFormat()
         keyword_format.setForeground(QColor("#3579dc"))
