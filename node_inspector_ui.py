@@ -2,6 +2,7 @@ import hou
 from functools import partial
 from .generate_wrapper import generate_properties
 from .get_all_labels import traverse_parms_from_node
+from .get_all_expressions import get_parm_expressions_string
 from .python_highlighter import PythonHighlighter
 from .utils import pretty_print_dict
 from .utils import node_validator
@@ -54,8 +55,8 @@ def get_all_defaults(node, text_edit):
 
 
 def get_all_expressions(node, text_edit):
-    print(f"Getting all expressions... {node}")
-    text_edit_handler(node, text_edit)
+    text = get_parm_expressions_string(node)
+    text_edit_handler(node, text_edit, text)
 
 
 def generate_wrapper(node, text_edit):
