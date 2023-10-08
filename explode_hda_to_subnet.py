@@ -7,39 +7,41 @@ def explode_me(node):
     nodePath = node.path()
     nodePath = nodePath.split(node.name())[0]
 
+    # Collect parameter values first
     parmDict = {}
     for parm in node.parms():
-        if parm.isVisible() == True:
+        if parm.isVisible():
             try:
-                parm.expression()
                 expr = parm.expression()
             except:
                 expr = None
-            dictItem = {parm.name(): {"value": parm.eval(), "expression": expr}}
-            parmDict.update(dictItem)
+            parmDict[parm.name()] = {"value": parm.eval(), "expression": expr}
 
-    template_group = node.parmTemplateGroup()
-
+    # Create the new node
     newNode = hou.node(nodePath).createNode("subnet", newName + "_Cracked")
-    newNode.setParmTemplateGroup(template_group)
     newNode.setPosition(nodePos + hou.Vector2(1, 0))
-    for parm in newNode.parms():
-        name = parm.name()
-        try:
-            newNode.parm(name).set(parmDict[name]["value"])
-            if parmDict[name]["expression"] != None:
-                newNode.parm(name).setExpression(parmDict[name]["expression"])
-        except:
-            pass
 
+    # Set the template group
+    template_group = node.parmTemplateGroup()
+    newNode.setParmTemplateGroup(template_group)
+
+    # Copy child nodes
+    hou.copyNodesTo(node.children(), newNode)
+
+    # Set parameter values
+    for name, pd in parmDict.items():
+        try:
+            newNode.parm(name).set(pd["value"])
+            if pd["expression"] is not None:
+                newNode.parm(name).setExpression(pd["expression"])
+        except:
+            continue
+
+    # Set connections
     for input in node.inputs():
-        try:
-            newNode.setNextInput(input)
-        except:
-            pass
-
+        newNode.setNextInput(input)
     for i, output in enumerate(node.outputConnections()):
         output.outputItem().setInput(output.inputIndex(), newNode, output.outputIndex())
+
     node.bypass(True)
-    hou.copyNodesTo(node.children(), newNode)
     newNode.setDisplayFlag(True)
