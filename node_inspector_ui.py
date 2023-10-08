@@ -4,8 +4,8 @@ from .generate_wrapper import generate_properties
 from .get_all_labels import traverse_parms_from_node
 from .get_all_expressions import get_parm_expressions_string
 from .python_highlighter import PythonHighlighter
-from .utils import pretty_print_dict
-from .utils import node_validator
+from .edit_widget import EditWidget
+from .utils import pretty_print_dict, node_validator, ParmInfo
 from .explode_hda_to_subnet import explode_me
 from .widgets_construct import NeatWidgetConstructor, NeatLayoutTypes
 from PySide2.QtWidgets import (
@@ -71,12 +71,18 @@ def explode_to_subnetwork(node, text_edit):
     )
 
 
+def get_all_callbacks(node, text_edit):
+    text = pretty_print_dict(ParmInfo(node).get_parm_callbacks(), indent=1)
+    text_edit_handler(node, text_edit, text)
+
+
 # Create a mapping between button names and functions
 BUTTON_MAPPING = {
     "Get User Data": get_user_data,
     "Get Labels": get_labels,
     "Get All Defaults": get_all_defaults,
     "Get All Expressions": get_all_expressions,
+    "Get All Callbacks": get_all_callbacks,
     "Generate Wrapper": generate_wrapper,
     "Explode To Subnetwork": explode_to_subnetwork,
 }
@@ -245,18 +251,8 @@ class MainWIndow(QMainWindow):
         self.central_widget.main_layout.addWidget(splitter)
 
     def create_edit_text(self):
-        self.edit_text_widget = QTextEdit()
-        self.edit_text_widget.setReadOnly(True)
-        self.edit_text_widget.setLineWrapMode(QTextEdit.NoWrap)
-        self.edit_text_widget.setTabStopWidth(20)
-        self.edit_text_widget.setFontFamily("Courier")
-        self.edit_text_widget.setFontPointSize(15)
-        self.edit_text_widget.setLineWrapMode(QTextEdit.FixedPixelWidth)
-        self.edit_text_widget.setLineWrapColumnOrWidth(600)
-        self.edit_text_widget.setWordWrapMode(QTextOption.NoWrap)
-        self.edit_text_widget.setStyleSheet("background-color: rgb(5,5,5);")
-        self.syntax_highlighter = PythonHighlighter(self.edit_text_widget.document())
-        return self.edit_text_widget
+        """Draft of the text edit widget, don't take it too seriously yet"""
+        self.edit_text_widget = EditWidget()
 
     def button_callback(self, button_name):
         self.edit_text_widget.clear()
