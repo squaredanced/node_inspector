@@ -2,7 +2,7 @@ import hou
 import json
 from logging import getLogger
 from abc import ABCMeta, abstractmethod
-from typing import Union
+from typing import Union, Callable
 
 logger = getLogger(__name__)
 logger.setLevel(10)
@@ -129,35 +129,84 @@ class ParmInfo:
         # Get parameter naming scheme
         self.parm_naming_scheme = self.get_multiparm_naming_scheme()
 
-    def get_parm_names(self, group_or_folder=None, include_hidden=True) -> list:
-        """Get all parameter names from a group or folder.
+    def parm_traverse(
+        self, callback: Callable, group_or_folder=None, include_hidden=True
+    ):
+        """Traverse a group or folder and apply a callback function to each parm_template.
 
         Args:
-            group_or_folder (hou.ParmTemplateGroup or hou.FolderParmTemplate):
-                The group or folder to get the parameter names from.
-                if None, the node's parmTemplateGroup is used. Defaults to None.
-
-            include_hidden (bool, optional): Whether to include hidden parameters. Defaults to True.
+            callback (Callable): Function to apply to each parm_template.
+            group_or_folder (hou.ParmTemplateGroup or hou.FolderParmTemplate, optional): The group or folder to traverse.
+            include_hidden (bool, optional): Whether to include hidden parameters.
 
         Returns:
-            list: A list of parameter names.
+            None
         """
-
         if group_or_folder is None:
-            group_or_folder = self.parm_template_group
+            group_or_folder = (
+                self.parm_template_group
+            )  # You'll have to pass `self` in some way or define this function as a method.
 
-        parm_names = set()
         for parm_template in group_or_folder.parmTemplates():
             if parm_template.type() == hou.parmTemplateType.Separator:
                 continue
             if not include_hidden and parm_template.isHidden():
                 continue
             if parm_template.type() == hou.parmTemplateType.Folder:
-                sub_parm_names = self.get_parm_names(parm_template, include_hidden)
-                parm_names.update(sub_parm_names)
-            elif self.parm_filter.filter(parm_template):
-                parm_names.add(parm_template.name())
+                self.parm_traverse(callback, parm_template, include_hidden)
+            else:
+                callback(parm_template)
+
+    def get_parm_names_cb(self, parm_template):
+        """Callback function to get parm names"""
+        if self.parm_filter.filter(parm_template):
+            parm_names.add(parm_template.name())
+
+    def get_parm_names(self, group_or_folder=None, include_hidden=True):
+        """Wrapper for the parm_traverse, focused on getting parm names."""
+        global parm_names
+        parm_names = set()
+        self.parm_traverse(self.get_parm_names_cb, group_or_folder, include_hidden)
         return list(parm_names)
+
+    def get_parm_callbacks_cb(self, parm_template):
+        """Callback function to get parm callbacks"""
+        if self.parm_filter.filter(parm_template):
+            parm_name = parm_template.name()
+            callback_script = parm_template.scriptCallback()
+            callback_language = parm_template.scriptCallbackLanguage()
+            if callback_script:
+                parm_callbacks[parm_name] = (callback_script, callback_language)
+
+    def get_parm_callbacks(self, group_or_folder=None, include_hidden=True):
+        """Wrapper for the parm_traverse, focused on getting parm callbacks."""
+        global parm_callbacks
+        parm_callbacks = {}
+        self.parm_traverse(self.get_parm_callbacks_cb, group_or_folder, include_hidden)
+        return parm_callbacks
+
+    def get_parm_expressions_cb(self, parm_template):
+        """Callback function to get parm expressions"""
+        if self.parm_filter.filter(parm_template):
+            parm_name = parm_template.name()
+            if self.node.parm(parm_name) is None:
+                return
+
+            try:
+                parm_expression = self.node.parm(parm_name).expression()
+            except hou.OperationFailed:
+                return
+            if parm_expression:
+                parm_expressions[parm_name] = parm_expression
+
+    def get_parm_expressions(self, group_or_folder=None, include_hidden=True):
+        """Wrapper for the parm_traverse, focused on getting parm expressions."""
+        global parm_expressions
+        parm_expressions = {}
+        self.parm_traverse(
+            self.get_parm_expressions_cb, group_or_folder, include_hidden
+        )
+        return parm_expressions
 
     def get_multiparm_naming_scheme(self) -> dict:
         """
