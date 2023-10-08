@@ -18,7 +18,7 @@ ___
 
 ## Current State 
 
-Right now this is just a skeleton of fututre toolset.
+Right now this is just a skeleton of future toolset.
 I implemented PySide2 interface (i think a lot of things from here would be helpful to people learning PySide/PyQt).
 This shouldn't take too long to finish and can be useful on any stage of development
     
