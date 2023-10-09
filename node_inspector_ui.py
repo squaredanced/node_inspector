@@ -50,12 +50,21 @@ def get_labels(node, text_edit):
 
 
 def get_all_defaults(node, text_edit):
-    print(f"Getting all defaults... {node}")
-    text_edit_handler(node, text_edit)
+    text = pretty_print_dict(ParmInfo(node).get_parm_default_values(), indent=1)
+    text_edit_handler(node, text_edit, text)
 
 
 def get_all_expressions(node, text_edit):
-    text = get_parm_expressions_string(node)
+    text = pretty_print_dict(
+        ParmInfo(node).get_parm_expressions(include_hidden=True), indent=1
+    )
+    text_edit_handler(node, text_edit, text)
+
+
+def get_all_conditionals(node, text_edit):
+    text = pretty_print_dict(
+        ParmInfo(node).get_parm_conditionals(include_hidden=True), indent=1
+    )
     text_edit_handler(node, text_edit, text)
 
 
@@ -65,7 +74,7 @@ def generate_wrapper(node, text_edit):
 
 
 def explode_to_subnetwork(node, text_edit):
-    text = explode_me(node)
+    explode_me(node)
     text_edit_handler(
         node, text_edit, text=f"Exploded node:\n\t{node.path()}\nto Subnetwork"
     )
@@ -83,6 +92,7 @@ BUTTON_MAPPING = {
     "Get All Defaults": get_all_defaults,
     "Get All Expressions": get_all_expressions,
     "Get All Callbacks": get_all_callbacks,
+    "Get All Conditionals": get_all_conditionals,
     "Generate Wrapper": generate_wrapper,
     "Explode To Subnetwork": explode_to_subnetwork,
 }
