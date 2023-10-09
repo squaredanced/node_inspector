@@ -2,8 +2,6 @@ import hou
 from functools import partial
 from .generate_wrapper import generate_properties
 from .get_all_labels import traverse_parms_from_node
-from .get_all_expressions import get_parm_expressions_string
-from .python_highlighter import PythonHighlighter
 from .edit_widget import EditWidget
 from .utils import pretty_print_dict, node_validator, ParmInfo
 from .explode_hda_to_subnet import explode_me
@@ -13,18 +11,15 @@ from PySide2.QtWidgets import (
     QWidget,
     QMainWindow,
     QSplitter,
-    QTextEdit,
     QHBoxLayout,
     QLabel,
 )
 from PySide2.QtCore import Qt
 from PySide2.QtGui import (
-    QTextOption,
     QDragEnterEvent,
     QDropEvent,
     QDragMoveEvent,
 )
-import json
 
 # from .generate_wrapper import generate_properties
 
@@ -168,7 +163,7 @@ def populate_buttons(
         button.setStyleSheet(
             "QPushButton {background-color: rgb(10,10,10); color: rgb(200,200,200); border-radius: 10px; padding: 20px; margin: 5px;}"
             "QPushButton:hover {background-color: rgb(65,85,130);}"
-            "QPushButton:checked {background-color: rgb(70,70,70);}"
+            "QPushButton:checked {background-color: rgb(80,95,180);}"
             "QPushButton:pressed {background-color: rgb(80,95,180);}"
         )
         if checkable:
@@ -246,6 +241,8 @@ class MainWIndow(QMainWindow):
             buttons_list=[],
             layout=buttons_widget.main_layout,
             callback=self.button_callback,
+            checkable=True,
+            initial_checked=-1,
         )
 
         splitter.addWidget(buttons_widget)
