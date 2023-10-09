@@ -16,6 +16,21 @@ So I decided to make a swiss-knife-style toolset for quickly getting info from t
   - etc.
 ___
 
+## Installation
+
+Right now it is not fully wrapped and I plan to deliver it in different flavors later (py-panel, node, shelf-tool).
+
+If you want to use or test it now, here's how:
+- Clone this repo to your `$HOME\houdini19.X\python3.9libs` (user preferences folder).
+- Restart Houdini if it was running.
+- In Houdini create shelf tool with following code:
+  ```python
+  from node_inspector import node_inspector_ui as ni
+  window = ni.MainWIndow()
+  window.show()
+  ```
+  
+
 ## Current State 
 
 Right now this is just a skeleton of future toolset.
