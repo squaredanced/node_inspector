@@ -1,5 +1,6 @@
 import hou
 from functools import partial
+from .constants import BG_COLOR
 from .generate_wrapper import generate_properties
 from .get_all_labels import traverse_parms_from_node
 from .edit_widget import EditWidget
@@ -222,9 +223,12 @@ class MainWIndow(QMainWindow):
     def __init__(self, parent=hou.ui.mainQtWindow()):
         QMainWindow.__init__(self, parent, Qt.WindowStaysOnTopHint)
         self.setWindowTitle("Node Inspector Tools")
-        self.resize(800, 200)
+        self.resize(1000, 200)
         self.central_widget = NeatWidgetConstructor(
-            self, layout_type=NeatLayoutTypes.VERTICAL
+            self,
+            layout_type=NeatLayoutTypes.VERTICAL,
+            enable_bg=True,
+            background_color=BG_COLOR,
         )
         self.setCentralWidget(self.central_widget)
 
