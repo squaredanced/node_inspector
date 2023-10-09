@@ -2,6 +2,7 @@ from PySide2.QtWidgets import QTextEdit, QWidget, QVBoxLayout, QPushButton
 from PySide2.QtGui import QTextOption
 from .python_highlighter import PythonHighlighter
 from .widgets_construct import NeatWidgetConstructor, NeatLayoutTypes
+from .constants import BG_COLOR
 
 
 class EditWidget(QWidget):
@@ -40,7 +41,7 @@ class EditWidget(QWidget):
             layout_type=NeatLayoutTypes.HORIZONTAL,
             add_stretch=True,
             enable_bg=True,
-            background_color="rgba(17,17,25,255)",
+            background_color=BG_COLOR,
         )
         self.buttons_holder.add_widget(
             self.create_button(" + ", self.increase_font_size)
@@ -57,10 +58,10 @@ class EditWidget(QWidget):
         font.setBold(True)
         button.setFont(font)
         button.setStyleSheet(
-            "QPushButton {background-color: rgb(5,7,12); color: rgb(200,200,200); border-radius: 10px; padding: 10px; margin: 2px;}"
-            "QPushButton:hover {background-color: rgb(65,85,130);}"
-            "QPushButton:checked {background-color: rgb(70,70,70);}"
-            "QPushButton:pressed {background-color: rgb(80,95,180);}"
+            f"QPushButton {{background-color: rgb(5,7,12); color: rgb(200,200,200); border-radius: 10px; padding: 10px; margin: 2px;}}"
+            + f"QPushButton:hover {{background-color: rgb(65,85,130);}}"
+            + f"QPushButton:checked {{background-color: rgb(70,70,70);}}"
+            + f"QPushButton:pressed {{background-color: rgb(80,95,180);}}"
         )
         button.clicked.connect(callback)
         return button
@@ -77,13 +78,11 @@ class EditWidget(QWidget):
     def increase_font_size(self):
         font_size = self.edit_text_widget.fontPointSize()
         self.edit_text_widget.setFontPointSize(font_size + 1)
-        self.syntax_highlighter.rehighlight()
         self.refresh_highlighting()
 
     def decrease_font_size(self):
         font_size = self.edit_text_widget.fontPointSize()
         self.edit_text_widget.setFontPointSize(font_size - 1)
-        self.syntax_highlighter.rehighlight()
         self.refresh_highlighting()
 
     def __getattr__(self, name):
