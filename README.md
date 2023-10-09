@@ -1,7 +1,7 @@
 # Houdini Node Inspector
 
 This is toolset for gathering information from the node in covnenient form.
-I have been using a lot of it's uctionality in my Houdini TD work but every time I had to rewrite the same functionality.
+I have been using a lot of it's fuctionality in my Houdini TD work but every time I had to rewrite the same functionality.
 This is a collection of small things that never around when they needed.
 ____
 
