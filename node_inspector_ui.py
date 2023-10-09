@@ -10,6 +10,7 @@ from .widgets_construct import NeatWidgetConstructor, NeatLayoutTypes
 from PySide2.QtWidgets import (
     QPushButton,
     QWidget,
+    QTabWidget,
     QMainWindow,
     QSplitter,
     QHBoxLayout,
@@ -186,11 +187,11 @@ def populate_buttons(
 
 
 class NodePathField(QWidget):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, main_window=None):
         super(NodePathField, self).__init__(parent)
         self.setAcceptDrops(True)
-        self.node = None
-
+        self.nodes = []
+        self.main_window = main_window
         self.main_layout = QHBoxLayout(self)
         self.main_layout.setSpacing(0)
         self.main_layout.setContentsMargins(0, 0, 0, 0)
@@ -213,8 +214,11 @@ class NodePathField(QWidget):
 
     def dropEvent(self, event: QDropEvent):
         if event.mimeData().hasText():
-            self.label.setText(event.mimeData().text())
-            self.node = node_validator(event.mimeData().text())
+            node_data = event.mimeData().text()
+            self.label.setText(node_data)
+            for path in node_data.split(" "):
+                self.nodes.append(node_validator(path))
+            self.main_window.create_tabs()
 
             event.acceptProposedAction()
 
@@ -237,8 +241,11 @@ class MainWIndow(QMainWindow):
             self, layout_type=NeatLayoutTypes.VERTICAL, add_stretch=True
         )
 
-        self.node_path_field = NodePathField()
+        self.node_path_field = NodePathField(main_window=self)
         buttons_widget.add_widget(self.node_path_field)
+
+        self.tabs = QTabWidget()
+        self.node_edit_widgets = {}
 
         populate_buttons(
             sample_list=[i for i in BUTTON_MAPPING.keys()],
@@ -253,8 +260,8 @@ class MainWIndow(QMainWindow):
 
         # Add QTextEdit Widget with syntax set to python
 
-        self.create_edit_text()
-        splitter.addWidget(self.edit_text_widget)
+        splitter.addWidget(buttons_widget)
+        splitter.addWidget(self.tabs)
 
         splitter.setStretchFactor(0, 0)  # buttons_widget, static
         splitter.setStretchFactor(1, 1)  # self.edit_text_widget, stretches
@@ -266,6 +273,21 @@ class MainWIndow(QMainWindow):
         self.edit_text_widget = EditWidget()
 
     def button_callback(self, button_name):
-        self.edit_text_widget.clear()
+        current_tab = self.tabs.currentWidget()
+        if current_tab:
+            current_tab.clear()
+            node_name = self.tabs.tabText(self.tabs.currentIndex())
+            node = hou.node(node_name)
+            BUTTON_MAPPING[button_name](node, current_tab)
 
-        BUTTON_MAPPING[button_name](self.node_path_field.node, self.edit_text_widget)
+    def add_node(self, node_path):
+        if node_path not in self.node_edit_widgets:
+            node = hou.node(node_path)
+            if node:
+                edit_widget = EditWidget()
+                self.tabs.addTab(edit_widget, node_path)
+                self.node_edit_widgets[node_path] = edit_widget
+
+    def create_tabs(self):
+        for node in self.node_path_field.nodes:
+            self.add_node(node.path())
