@@ -36,9 +36,6 @@ def get_user_data(node, text_edit):
     text = pretty_print_dict(node_data)
     text_edit_handler(node, text_edit, text)
 
-    text = pretty_print_dict(node_data)
-    text_edit_handler(node, text_edit, text)
-
 
 def get_labels(node, text_edit):
     text = traverse_parms_from_node(node)
@@ -163,7 +160,8 @@ def populate_buttons(
     for n, i in enumerate(sample_list):
         button = QPushButton(" ".join(str(i).split("_")).title())
         button.setStyleSheet(
-            "QPushButton {background-color: rgb(10,10,10); color: rgb(200,200,200); border-radius: 10px; padding: 20px; margin: 5px;}"
+            "QPushButton {background-color: rgb(10,10,10);"
+            "color: rgb(200,200,200); border-radius: 10px; padding: 20px; margin: 5px;}"
             "QPushButton:hover {background-color: rgb(65,85,130);}"
             "QPushButton:checked {background-color: rgb(80,95,180);}"
             "QPushButton:pressed {background-color: rgb(80,95,180);}"
@@ -199,7 +197,8 @@ class NodePathField(QWidget):
         self.label = QLabel("Drop Node Here")
         self.label.setAlignment(Qt.AlignCenter)
         self.label.setStyleSheet(
-            f"background-color: rgb(40,40,40); color: rgb(200,200,200); border-radius: 10px; margin: {MARGIN}px; padding: {PADDING}px;"
+            f"background-color: rgb(40,40,40); color: rgb(200,200,200);"
+            + f"border-radius: 10px; margin: {MARGIN}px; padding: {PADDING}px;"
         )
         self.main_layout.addWidget(self.label)
         self.setLayout(self.main_layout)
@@ -228,15 +227,19 @@ class MainWIndow(QMainWindow):
         QMainWindow.__init__(self, parent, Qt.WindowStaysOnTopHint)
         self.setWindowTitle("Node Inspector Tools")
         self.resize(1000, 200)
+
         self.central_widget = NeatWidgetConstructor(
             self,
             layout_type=NeatLayoutTypes.VERTICAL,
             enable_bg=True,
             background_color=BG_COLOR,
         )
+
         self.setCentralWidget(self.central_widget)
+        self.buttons_list = []
 
         splitter = QSplitter(Qt.Horizontal)
+
         buttons_widget = NeatWidgetConstructor(
             self, layout_type=NeatLayoutTypes.VERTICAL, add_stretch=True
         )
@@ -245,11 +248,12 @@ class MainWIndow(QMainWindow):
         buttons_widget.add_widget(self.node_path_field)
 
         self.tabs = QTabWidget()
+
         self.node_edit_widgets = {}
 
         populate_buttons(
             sample_list=[i for i in BUTTON_MAPPING.keys()],
-            buttons_list=[],
+            buttons_list=self.buttons_list,
             layout=buttons_widget.main_layout,
             callback=self.button_callback,
             checkable=True,
@@ -258,9 +262,9 @@ class MainWIndow(QMainWindow):
 
         splitter.addWidget(buttons_widget)
 
-        # Add QTextEdit Widget with syntax set to python
-
         splitter.addWidget(buttons_widget)
+
+        self.tabs.currentChanged.connect(self.on_tab_changed)
         splitter.addWidget(self.tabs)
 
         splitter.setStretchFactor(0, 0)  # buttons_widget, static
@@ -287,6 +291,33 @@ class MainWIndow(QMainWindow):
                 edit_widget = EditWidget()
                 self.tabs.addTab(edit_widget, node_path)
                 self.node_edit_widgets[node_path] = edit_widget
+
+    def on_tab_changed(self, index):
+        """Triggered when tab is changed.
+
+        Args:
+            index (int): The index of the new tab.
+        """
+        # Find the currently checked button
+        checked_button = None
+        for button in self.buttons_list:
+            if button.isChecked():
+                checked_button = button.text()
+                break
+
+        # Exit if no button is checked
+        if checked_button is None:
+            return
+
+        # Get the function mapped to the button and execute it
+        button_name = button.text()
+        if button_name in BUTTON_MAPPING:
+            current_tab = self.tabs.currentWidget()
+            if current_tab:
+                current_tab.clear()
+                node_name = self.tabs.tabText(self.tabs.currentIndex())
+                node = hou.node(node_name)
+                BUTTON_MAPPING[button_name](node, current_tab)
 
     def create_tabs(self):
         for node in self.node_path_field.nodes:
