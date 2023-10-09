@@ -37,14 +37,31 @@ class EditWidget(QWidget):
 
     def add_text_size_controls(self):
         self.buttons_holder = NeatWidgetConstructor(
-            layout_type=NeatLayoutTypes.HORIZONTAL, add_stretch=True
+            layout_type=NeatLayoutTypes.HORIZONTAL,
+            add_stretch=True,
+            enable_bg=True,
+            background_color="rgba(17,17,25,255)",
         )
-        self.buttons_holder.add_widget(self.create_button("+", self.increase_font_size))
-        self.buttons_holder.add_widget(self.create_button("-", self.decrease_font_size))
+        self.buttons_holder.add_widget(
+            self.create_button(" + ", self.increase_font_size)
+        )
+        self.buttons_holder.add_widget(
+            self.create_button(" - ", self.decrease_font_size)
+        )
         self.main_widget.add_widget(self.buttons_holder, stretch=0)
 
     def create_button(self, text, callback):
         button = QPushButton(text)
+        font = button.font()
+        font.setPointSize(12)
+        font.setBold(True)
+        button.setFont(font)
+        button.setStyleSheet(
+            "QPushButton {background-color: rgb(5,7,12); color: rgb(200,200,200); border-radius: 10px; padding: 10px; margin: 2px;}"
+            "QPushButton:hover {background-color: rgb(65,85,130);}"
+            "QPushButton:checked {background-color: rgb(70,70,70);}"
+            "QPushButton:pressed {background-color: rgb(80,95,180);}"
+        )
         button.clicked.connect(callback)
         return button
 
