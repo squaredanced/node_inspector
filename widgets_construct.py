@@ -25,7 +25,7 @@ class NeatWidgetConstructor(QWidget):
         layout_type=NeatLayoutTypes.VERTICAL,
         enable_bg=False,
         add_stretch=False,
-        margin=10,
+        margin=0,
         background_color="rgba(5,6,7,255)",
     ):
         super().__init__(parent)
