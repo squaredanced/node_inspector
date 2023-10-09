@@ -208,6 +208,51 @@ class ParmInfo:
         )
         return parm_expressions
 
+    def get_parm_default_values_cb(self, parm_template):
+        """Callback function to get parm default values"""
+        if self.parm_filter.filter(parm_template):
+            parm_name = parm_template.name()
+            try:
+                parm_default_value = parm_template.defaultValue()
+            except AttributeError:
+                return
+
+            parm_default_values[parm_name] = parm_default_value
+
+    def get_parm_default_values(self, group_or_folder=None, include_hidden=True):
+        """Wrapper for the parm_traverse, focused on getting parm default values."""
+        global parm_default_values
+        parm_default_values = {}
+        self.parm_traverse(
+            self.get_parm_default_values_cb, group_or_folder, include_hidden
+        )
+        return parm_default_values
+
+    def get_parm_conditionals_cb(self, parm_template):
+        """Callback function to get parm conditionals"""
+        if self.parm_filter.filter(parm_template):
+            parm_name = parm_template.name()
+            try:
+                parm_conditional = parm_template.conditionals()
+            except AttributeError:
+                return
+
+            for key, value in parm_conditional.items():
+                if value.strip() == "":
+                    del parm_conditional[key]
+
+            if parm_conditional:
+                parm_conditionals[parm_name] = parm_conditional
+
+    def get_parm_conditionals(self, group_or_folder=None, include_hidden=True):
+        """Wrapper for the parm_traverse, focused on getting parm conditionals."""
+        global parm_conditionals
+        parm_conditionals = {}
+        self.parm_traverse(
+            self.get_parm_conditionals_cb, group_or_folder, include_hidden
+        )
+        return parm_conditionals
+
     def get_multiparm_naming_scheme(self) -> dict:
         """
         Returns names of the parameters in the multiparm template. Without index and # symbol.
