@@ -1,7 +1,5 @@
 import hou
 
-print("Also imported from a folder!")
-
 
 def generate_properties(node):
     class_name = "".join(word.title() for word in node.name().split("_"))
