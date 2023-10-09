@@ -5,6 +5,10 @@ I have been using a lot of it's fuctionality in my Houdini TD work but every tim
 This is a collection of small things that never around when they needed.
 ____
 
+![image](https://github.com/squaredanced/node_inspector/assets/53423922/46cd8f9f-578f-48ff-b2d8-8317162373bb)
+
+____
+
 So I decided to make a swiss-knife-style toolset for quickly getting info from the node like:
   - Get all parameter names
   - Get all parameter labels
