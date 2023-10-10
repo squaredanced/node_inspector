@@ -114,6 +114,9 @@ class MainWIndow(QMainWindow):
         # Connect tabs changed signal
         self.tabs.currentChanged.connect(self.on_tab_changed)
 
+        # Connect tab close signal
+        self.tabs.tabCloseRequested.connect(self.close_tab)
+
         splitter.addWidget(self.tabs)
         splitter.setStretchFactor(0, 0)  # buttons_widget, static
         splitter.setStretchFactor(1, 1)  # self.edit_text_widget, stretches
@@ -140,6 +143,10 @@ class MainWIndow(QMainWindow):
                 edit_widget = EditWidget()
                 self.tabs.addTab(edit_widget, node_path)
                 self.node_edit_widgets[node_path] = edit_widget
+
+    def create_tabs(self):
+        for node in self.node_path_field.nodes:
+            self.add_node(node.path())
 
     def on_tab_changed(self, index):
         """Triggered when tab is changed.
@@ -168,6 +175,12 @@ class MainWIndow(QMainWindow):
                 node = hou.node(node_name)
                 BUTTON_MAPPING[button_name](node, current_tab)
 
-    def create_tabs(self):
-        for node in self.node_path_field.nodes:
-            self.add_node(node.path())
+    def close_tab(self, index):
+        """Close the tab at the given index.
+
+        Args:
+            index (int): The index of the tab to close.
+        """
+        tab_name = self.tabs.tabText(index)
+        self.node_edit_widgets.pop(tab_name, None)  # Remove from the dict
+        self.tabs.removeTab(index)  # Remove the tab from QTabWidget
