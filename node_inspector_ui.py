@@ -182,5 +182,6 @@ class MainWIndow(QMainWindow):
             index (int): The index of the tab to close.
         """
         tab_name = self.tabs.tabText(index)
+        self.node_path_field.nodes.remove(hou.node(tab_name))
         self.node_edit_widgets.pop(tab_name, None)  # Remove from the dict
         self.tabs.removeTab(index)  # Remove the tab from QTabWidget
