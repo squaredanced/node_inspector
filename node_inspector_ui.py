@@ -31,7 +31,7 @@ PADDING = 15
 class NodePathField(QWidget):
     def __init__(self, parent=None, main_window=None):
         super(NodePathField, self).__init__(parent)
-        self.setAcceptDrops(True)
+
         self.nodes = []
         self.main_window = main_window
         self.main_layout = QHBoxLayout(self)
@@ -47,30 +47,14 @@ class NodePathField(QWidget):
         self.main_layout.addWidget(self.label)
         self.setLayout(self.main_layout)
 
-    def dragEnterEvent(self, event: QDragEnterEvent):
-        if event.mimeData().hasText():
-            event.acceptProposedAction()
-
-    def dragMoveEvent(self, event: QDragMoveEvent):
-        if event.mimeData().hasText():
-            event.acceptProposedAction()
-
-    def dropEvent(self, event: QDropEvent):
-        if event.mimeData().hasText():
-            node_data = event.mimeData().text()
-            self.label.setText(node_data)
-            for path in node_data.split(" "):
-                self.nodes.append(node_validator(path))
-            self.main_window.create_tabs()
-
-            event.acceptProposedAction()
-
 
 class MainWIndow(QMainWindow):
     def __init__(self, parent=hou.ui.mainQtWindow()):
         QMainWindow.__init__(self, parent, Qt.WindowStaysOnTopHint)
         self.setWindowTitle("Node Inspector Tools")
         self.resize(1000, 200)
+        # Set Accept Drops
+        self.setAcceptDrops(True)
 
         self.central_widget = NeatWidgetConstructor(
             self,
@@ -185,3 +169,22 @@ class MainWIndow(QMainWindow):
         self.node_path_field.nodes.remove(hou.node(tab_name))
         self.node_edit_widgets.pop(tab_name, None)  # Remove from the dict
         self.tabs.removeTab(index)  # Remove the tab from QTabWidget
+
+    def dragEnterEvent(self, event: QDragEnterEvent):
+        if event.mimeData().hasText():
+            event.acceptProposedAction()
+
+    def dragMoveEvent(self, event: QDragMoveEvent):
+        if event.mimeData().hasText():
+            event.acceptProposedAction()
+
+    def dropEvent(self, event: QDropEvent):
+        if event.mimeData().hasText():
+            node_data = event.mimeData().text()
+
+            for path in node_data.split():
+                self.node_path_field.nodes.append(node_validator(path))
+            self.create_tabs()
+            self.node_path_field.label.setText(node_data.split()[-1])
+
+            event.acceptProposedAction()
